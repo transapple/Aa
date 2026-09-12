@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "School Manager",
+    "slug": "transapple-technologies",
+    "owner": "transapple-technologies",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#2F6690"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.transappletechnologies.schoolmanager"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "PASTE_YOUR_PROJECT_ID_HERE"
+      }
+    }
+  }
+}
