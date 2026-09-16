@@ -4,13 +4,30 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   StyleSheet,
   Modal,
   ScrollView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  ScreenHeader,
+  Chip,
+  Card,
+  Avatar,
+  Badge,
+  Reveal,
+  Tappable,
+  GradientButton,
+  GhostButton,
+  EmptyState,
+  colors,
+  gradients,
+  radius,
+  spacing,
+  shadow,
+} from '../theme/UI';
 
 const CLASSES = ['Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
 const METHODS = ['Cash', 'Mobile Money', 'Bank Transfer'];
@@ -87,31 +104,30 @@ export default function FeesScreen() {
     setPayModalVisible(false);
   };
 
+  const totalOutstanding = SEED_STUDENTS.reduce((a, s) => a + Math.max(balanceFor(s), 0), 0);
+
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Tabs */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
-        {[
-          ['payments', 'Payments'],
-          ['structure', 'Fee Structure'],
-        ].map(([id, label]) => (
-          <TouchableOpacity
-            key={id}
-            style={[styles.pill, tab === id && styles.pillActive]}
-            onPress={() => setTab(id)}
-          >
-            <Text style={[styles.pillText, tab === id && styles.pillTextActive]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <ScreenHeader
+        eyebrow="Finance"
+        title="Fees"
+        subtitle={`${currency(totalOutstanding)} outstanding across the school`}
+        gradient={gradients.amber}
+      />
+
+      <View style={styles.pillRowWrap}>
+        <Chip label="Payments" active={tab === 'payments'} activeGradient={gradients.amber} onPress={() => setTab('payments')} />
+        <Chip label="Fee Structure" active={tab === 'structure'} activeGradient={gradients.amber} onPress={() => setTab('structure')} />
+      </View>
 
       {tab === 'payments' && (
         <>
-          <View style={styles.topBar}>
+          <View style={styles.searchWrap}>
+            <Ionicons name="search" size={17} color={colors.inkFaint} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.search}
               placeholder="Search student"
-              placeholderTextColor="#9AA3B5"
+              placeholderTextColor={colors.placeholder}
               value={search}
               onChangeText={setSearch}
             />
@@ -119,24 +135,27 @@ export default function FeesScreen() {
           <FlatList
             data={filteredStudents}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-            renderItem={({ item }) => {
+            contentContainerStyle={{ padding: spacing.lg, paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={<EmptyState icon="cash-outline" title="No students match your search" />}
+            renderItem={({ item, index }) => {
               const balance = balanceFor(item);
               return (
-                <TouchableOpacity style={styles.card} onPress={() => openPayment(item)}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{item.full_name.charAt(0)}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>{item.full_name}</Text>
-                    <Text style={styles.cardSub}>
-                      {item.class_name} · Paid {currency(totalPaidFor(item.id))}
-                    </Text>
-                  </View>
-                  <Text style={[styles.balance, { color: balance > 0 ? '#D6564F' : '#227A61' }]}>
-                    {balance > 0 ? currency(balance) : 'Paid up'}
-                  </Text>
-                </TouchableOpacity>
+                <Reveal index={index} style={{ marginBottom: 10 }}>
+                  <Card onPress={() => openPayment(item)} style={styles.rowCard}>
+                    <Avatar name={item.full_name} color={colors.amber} />
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={styles.cardTitle}>{item.full_name}</Text>
+                      <Text style={styles.cardSub}>
+                        {item.class_name} · Paid {currency(totalPaidFor(item.id))}
+                      </Text>
+                    </View>
+                    <Badge
+                      label={balance > 0 ? currency(balance) : 'Paid up'}
+                      tone={balance > 0 ? 'danger' : 'success'}
+                    />
+                  </Card>
+                </Reveal>
               );
             }}
           />
@@ -144,18 +163,20 @@ export default function FeesScreen() {
       )}
 
       {tab === 'structure' && (
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg }} showsVerticalScrollIndicator={false}>
           <Text style={styles.sectionTitle}>Fee per class (per term)</Text>
-          {CLASSES.map((c) => (
-            <View key={c} style={styles.structureRow}>
-              <Text style={styles.structureLabel}>{c}</Text>
-              <TextInput
-                style={styles.structureInput}
-                keyboardType="numeric"
-                value={String(structure[c])}
-                onChangeText={(v) => setStructure({ ...structure, [c]: Number(v) || 0 })}
-              />
-            </View>
+          {CLASSES.map((c, i) => (
+            <Reveal index={i} key={c} style={{ marginBottom: 10 }}>
+              <View style={[styles.structureRow, shadow.soft]}>
+                <Text style={styles.structureLabel}>{c}</Text>
+                <TextInput
+                  style={styles.structureInput}
+                  keyboardType="numeric"
+                  value={String(structure[c])}
+                  onChangeText={(v) => setStructure({ ...structure, [c]: Number(v) || 0 })}
+                />
+              </View>
+            </Reveal>
           ))}
         </ScrollView>
       )}
@@ -163,18 +184,23 @@ export default function FeesScreen() {
       {/* Payment modal */}
       <Modal visible={payModalVisible} animationType="slide" onRequestClose={() => setPayModalVisible(false)}>
         <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <Text style={styles.modalTitle}>{activeStudent?.full_name}</Text>
-            <Text style={styles.modalSubtitle}>
-              {activeStudent?.class_name} · Balance{' '}
-              {activeStudent ? currency(balanceFor(activeStudent)) : ''}
-            </Text>
-
+          <ScreenHeader
+            eyebrow={activeStudent?.class_name}
+            title={activeStudent?.full_name || ''}
+            subtitle={activeStudent ? `Balance ${currency(balanceFor(activeStudent))}` : ''}
+            gradient={gradients.amber}
+            right={
+              <Tappable onPress={() => setPayModalVisible(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color="#fff" />
+              </Tappable>
+            }
+          />
+          <ScrollView contentContainerStyle={styles.modalBody}>
             <Text style={styles.sectionLabel}>Payment history</Text>
             {payments
               .filter((p) => p.student_id === activeStudent?.id)
               .map((p) => (
-                <View key={p.id} style={styles.historyRow}>
+                <View key={p.id} style={[styles.historyRow, shadow.soft]}>
                   <Text style={styles.historyAmount}>{currency(p.amount)}</Text>
                   <Text style={styles.historySub}>
                     {p.date} · {p.method}
@@ -194,29 +220,19 @@ export default function FeesScreen() {
                 value={payAmount}
                 onChangeText={setPayAmount}
                 placeholder="e.g. 200000"
-                placeholderTextColor="#9AA3B5"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
             <Text style={styles.label}>Method</Text>
             <View style={styles.chipRow}>
               {METHODS.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.chip, payMethod === m && styles.chipActive]}
-                  onPress={() => setPayMethod(m)}
-                >
-                  <Text style={[styles.chipText, payMethod === m && styles.chipTextActive]}>{m}</Text>
-                </TouchableOpacity>
+                <Chip key={m} label={m} active={payMethod === m} activeGradient={gradients.amber} onPress={() => setPayMethod(m)} />
               ))}
             </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.ghostButton} onPress={() => setPayModalVisible(false)}>
-                <Text style={styles.ghostButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryButton} onPress={recordPayment}>
-                <Text style={styles.primaryButtonText}>Record payment</Text>
-              </TouchableOpacity>
+              <GhostButton label="Close" onPress={() => setPayModalVisible(false)} style={{ flex: 1 }} />
+              <GradientButton label="Record payment" icon="checkmark" gradient={gradients.amber} onPress={recordPayment} style={{ flex: 1 }} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -226,125 +242,74 @@ export default function FeesScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F9' },
-  pillRow: { paddingHorizontal: 16, paddingTop: 16, maxHeight: 52 },
-  pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#E4E8EF',
-  },
-  pillActive: { backgroundColor: '#16274A', borderColor: '#16274A' },
-  pillText: { fontSize: 13, fontWeight: '700', color: '#5B647A' },
-  pillTextActive: { color: '#fff' },
-  topBar: { padding: 16, paddingBottom: 8 },
-  search: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderWidth: 1,
-    borderColor: '#E4E8EF',
-    fontSize: 14,
-  },
-  emptyText: { textAlign: 'center', color: '#9AA3B5', marginTop: 20, marginBottom: 10 },
-  card: {
+  safe: { flex: 1, backgroundColor: colors.bg },
+  pillRowWrap: { flexDirection: 'row', paddingHorizontal: spacing.lg, marginTop: -20, marginBottom: 6 },
+  searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
+    marginHorizontal: spacing.lg,
+    marginTop: 8,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...shadow.soft,
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FDECEC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontWeight: '800', color: '#B23F39', fontSize: 16 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#1D2433' },
-  cardSub: { fontSize: 12.5, color: '#5B647A', marginTop: 2 },
-  balance: { fontSize: 13, fontWeight: '800' },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: '#16274A', marginBottom: 14 },
+  search: { flex: 1, fontSize: 14, color: colors.ink },
+  rowCard: { flexDirection: 'row', alignItems: 'center' },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  cardSub: { fontSize: 12.5, color: colors.inkFaint, marginTop: 2, fontWeight: '500' },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, marginBottom: 14, marginTop: 6 },
   structureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: 14,
     justifyContent: 'space-between',
   },
-  structureLabel: { fontSize: 14.5, fontWeight: '700', color: '#1D2433' },
+  structureLabel: { fontSize: 14.5, fontWeight: '700', color: colors.ink },
   structureInput: {
     borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-    borderRadius: 8,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 9,
     fontSize: 14,
     width: 130,
     textAlign: 'right',
-    backgroundColor: '#FAFBFD',
+    backgroundColor: colors.surfaceAlt,
+    fontWeight: '700',
+    color: colors.ink,
   },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#16274A' },
-  modalSubtitle: { fontSize: 13, color: '#5B647A', marginTop: 4, marginBottom: 10 },
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: '#16274A', marginTop: 20, marginBottom: 10 },
+  closeBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  modalBody: { padding: spacing.lg, paddingBottom: 30 },
+  sectionLabel: { fontSize: 12.5, fontWeight: '800', color: colors.amber, marginTop: 8, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
+  emptyText: { textAlign: 'center', color: colors.inkFaint, marginTop: 10, marginBottom: 10 },
   historyRow: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: 13,
     marginBottom: 8,
   },
-  historyAmount: { fontSize: 15, fontWeight: '800', color: '#227A61' },
-  historySub: { fontSize: 12, color: '#5B647A', marginTop: 2 },
+  historyAmount: { fontSize: 15, fontWeight: '800', color: '#0F7A50' },
+  historySub: { fontSize: 12, color: colors.inkFaint, marginTop: 2, fontWeight: '500' },
   field: { marginBottom: 14 },
-  label: { fontSize: 12.5, fontWeight: '600', color: '#5B647A', marginBottom: 6 },
+  label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 8 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-    borderRadius: 10,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14.5,
-    backgroundColor: '#FAFBFD',
-    color: '#1D2433',
+    backgroundColor: colors.surfaceAlt,
+    color: colors.ink,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E4E8EF',
-    backgroundColor: '#FAFBFD',
-  },
-  chipActive: { backgroundColor: '#16274A', borderColor: '#16274A' },
-  chipText: { fontSize: 12.5, fontWeight: '600', color: '#5B647A' },
-  chipTextActive: { color: '#fff' },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20, marginBottom: 30 },
-  ghostButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-  },
-  ghostButtonText: { fontWeight: '700', color: '#5B647A' },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#16274A',
-  },
-  primaryButtonText: { fontWeight: '700', color: '#fff' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20, marginBottom: 20 },
 });

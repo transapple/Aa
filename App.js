@@ -4,16 +4,23 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import HomeScreen from './HomeScreen';
-import StudentsScreen from './StudentsScreen';
-import AttendanceScreen from './AttendanceScreen';
-import FeesScreen from './FeesScreen';
-import MoreScreen from './MoreScreen';
-import ExamsScreen from './ExamsScreen';
-import TeachersScreen from './TeachersScreen';
-import AcademicSetupScreen from './AcademicSetupScreen';
-import InventoryScreen from './InventoryScreen';
-import LibraryScreen from './LibraryScreen';
+import HomeScreen from './screens/HomeScreen';
+import StudentsScreen from './screens/StudentsScreen';
+import AttendanceScreen from './screens/AttendanceScreen';
+import FeesScreen from './screens/FeesScreen';
+import MoreScreen from './screens/MoreScreen';
+import ExamsScreen from './screens/ExamsScreen';
+import TeachersScreen from './screens/TeachersScreen';
+import AcademicSetupScreen from './screens/AcademicSetupScreen';
+import InventoryScreen from './screens/InventoryScreen';
+import LibraryScreen from './screens/LibraryScreen';
+import SchoolHealthScreen from './screens/SchoolHealthScreen';
+import CommsScreen from './screens/CommsScreen';
+import AioAiScreen from './screens/AioAiScreen';
+import AccountScreen from './screens/AccountScreen';
+import ContactScreen from './screens/ContactScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import TrashScreen from './screens/TrashScreen';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -23,9 +30,10 @@ const FeesStack = createNativeStackNavigator();
 const MoreStack = createNativeStackNavigator();
 
 const screenOptions = {
-  headerStyle: { backgroundColor: '#16274A' },
+  headerStyle: { backgroundColor: '#4338CA' },
   headerTintColor: '#fff',
   headerTitleStyle: { fontWeight: '700' },
+  headerShadowVisible: false,
 };
 
 function HomeStackScreen() {
@@ -62,16 +70,25 @@ function FeesStackScreen() {
 
 // "More" holds every module that doesn't get its own bottom tab, matching
 // the web app's BOTTOMNAV_PRIMARY_IDS (dashboard, students, attendance, fees)
-// with everything else living behind the "More" overflow sheet.
+// with everything else living behind the "More" overflow sheet — this now
+// covers the full web NAV list: AiO ai, Exams, Staff, Setup, Inventory,
+// Library, School Health, Comms, Account, Contact, Settings, Trash.
 function MoreStackScreen() {
   return (
     <MoreStack.Navigator screenOptions={screenOptions}>
       <MoreStack.Screen name="MoreMain" component={MoreScreen} options={{ title: 'More' }} />
+      <MoreStack.Screen name="AioAi" component={AioAiScreen} options={{ title: 'AiO ai' }} />
       <MoreStack.Screen name="Exams" component={ExamsScreen} options={{ title: 'Exams' }} />
       <MoreStack.Screen name="Teachers" component={TeachersScreen} options={{ title: 'Staff' }} />
       <MoreStack.Screen name="AcademicSetup" component={AcademicSetupScreen} options={{ title: 'Setup' }} />
       <MoreStack.Screen name="Inventory" component={InventoryScreen} options={{ title: 'Inventory & Assets' }} />
       <MoreStack.Screen name="Library" component={LibraryScreen} options={{ title: 'Library' }} />
+      <MoreStack.Screen name="SchoolHealth" component={SchoolHealthScreen} options={{ title: 'School Health' }} />
+      <MoreStack.Screen name="Comms" component={CommsScreen} options={{ title: 'Comms' }} />
+      <MoreStack.Screen name="Account" component={AccountScreen} options={{ title: 'Account' }} />
+      <MoreStack.Screen name="Contact" component={ContactScreen} options={{ title: 'Contact TransApple' }} />
+      <MoreStack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <MoreStack.Screen name="Trash" component={TrashScreen} options={{ title: 'Trash' }} />
     </MoreStack.Navigator>
   );
 }
@@ -90,10 +107,12 @@ export default function App() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: '#16274A',
+          tabBarActiveTintColor: '#4F46E5',
           tabBarInactiveTintColor: '#9AA3B5',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name={TAB_ICONS[route.name]} size={size} color={color} />
+          tabBarStyle: { borderTopColor: '#EAEDF6', height: 60, paddingBottom: 8, paddingTop: 6 },
+          tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={TAB_ICONS[route.name]} size={focused ? size + 1 : size} color={color} />
           ),
         })}
       >

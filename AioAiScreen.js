@@ -4,18 +4,19 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ScreenHeader, Tappable, Reveal, colors, gradients, radius, spacing, shadow } from '../theme/UI';
 
 const STARTERS = [
-  'Which students have unpaid fees this term?',
-  'Summarize today\u2019s attendance',
-  'Draft a message to parents about mid-term break',
+  { text: 'Which students have unpaid fees this term?', icon: 'cash-outline' },
+  { text: 'Summarize today\u2019s attendance', icon: 'checkmark-done-outline' },
+  { text: 'Draft a message to parents about mid-term break', icon: 'mail-outline' },
 ];
 
 export default function AioAiScreen() {
@@ -41,23 +42,49 @@ export default function AioAiScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <ScreenHeader
+        eyebrow="AI assistant"
+        title="AiO ai ✨"
+        subtitle="Ask anything about your school"
+        gradient={gradients.plum}
+      />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <FlatList
           data={messages}
           keyExtractor={(m) => m.id}
           contentContainerStyle={styles.chatContent}
-          renderItem={({ item }) => (
-            <View style={[styles.bubble, item.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant]}>
-              <Text style={item.role === 'user' ? styles.bubbleUserText : styles.bubbleAssistantText}>{item.text}</Text>
-            </View>
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => (
+            <Reveal index={index} delay={0} style={{ marginBottom: 10 }}>
+              {item.role === 'user' ? (
+                <LinearGradient colors={gradients.plum} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.bubbleUser]}>
+                  <Text style={styles.bubbleUserText}>{item.text}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={[styles.bubble, styles.bubbleAssistant, shadow.soft]}>
+                  <View style={styles.assistantTag}>
+                    <Ionicons name="sparkles" size={12} color={colors.violet} />
+                    <Text style={styles.assistantTagText}>AiO</Text>
+                  </View>
+                  <Text style={styles.bubbleAssistantText}>{item.text}</Text>
+                </View>
+              )}
+            </Reveal>
           )}
           ListFooterComponent={
             messages.length <= 1 ? (
               <View style={styles.startersWrap}>
-                {STARTERS.map((s) => (
-                  <TouchableOpacity key={s} style={styles.starterChip} onPress={() => send(s)}>
-                    <Text style={styles.starterText}>{s}</Text>
-                  </TouchableOpacity>
+                <Text style={styles.startersLabel}>Try asking</Text>
+                {STARTERS.map((s, i) => (
+                  <Reveal index={i} delay={200} key={s.text}>
+                    <Tappable style={[styles.starterChip, shadow.soft]} onPress={() => send(s.text)}>
+                      <View style={styles.starterIconWrap}>
+                        <Ionicons name={s.icon} size={16} color={colors.violet} />
+                      </View>
+                      <Text style={styles.starterText}>{s.text}</Text>
+                      <Ionicons name="arrow-forward" size={16} color={colors.inkFaint} />
+                    </Tappable>
+                  </Reveal>
                 ))}
               </View>
             ) : null
@@ -69,11 +96,14 @@ export default function AioAiScreen() {
             value={input}
             onChangeText={setInput}
             placeholder="Ask AiO anything about your school..."
+            placeholderTextColor={colors.placeholder}
             onSubmitEditing={() => send()}
           />
-          <TouchableOpacity style={styles.sendBtn} onPress={() => send()}>
-            <Ionicons name="send" size={18} color="#fff" />
-          </TouchableOpacity>
+          <Tappable onPress={() => send()} scaleTo={0.88}>
+            <LinearGradient colors={gradients.plum} style={styles.sendBtn} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <Ionicons name="send" size={17} color="#fff" />
+            </LinearGradient>
+          </Tappable>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -81,17 +111,28 @@ export default function AioAiScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F9' },
-  chatContent: { padding: 16, paddingBottom: 8 },
-  bubble: { maxWidth: '85%', borderRadius: 16, padding: 12, marginBottom: 10 },
-  bubbleAssistant: { backgroundColor: '#fff', alignSelf: 'flex-start', borderTopLeftRadius: 4 },
-  bubbleUser: { backgroundColor: '#16274A', alignSelf: 'flex-end', borderTopRightRadius: 4 },
-  bubbleAssistantText: { color: '#16274A', fontSize: 14 },
-  bubbleUserText: { color: '#fff', fontSize: 14 },
-  startersWrap: { marginTop: 8, gap: 8 },
-  starterChip: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E5E9F2' },
-  starterText: { fontSize: 13, color: '#16274A', fontWeight: '600' },
-  inputRow: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#fff', alignItems: 'center' },
-  input: { flex: 1, backgroundColor: '#EEF2F9', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 14 },
-  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#16274A', alignItems: 'center', justifyContent: 'center' },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  chatContent: { padding: spacing.lg, paddingBottom: 8 },
+  bubble: { maxWidth: '86%', borderRadius: radius.lg, padding: 14 },
+  bubbleAssistant: { backgroundColor: colors.surface, alignSelf: 'flex-start', borderTopLeftRadius: 4 },
+  bubbleUser: { alignSelf: 'flex-end', borderTopRightRadius: 4 },
+  bubbleAssistantText: { color: colors.ink, fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  bubbleUserText: { color: '#fff', fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  assistantTag: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  assistantTagText: { fontSize: 11, fontWeight: '800', color: colors.violet, textTransform: 'uppercase', letterSpacing: 0.4 },
+  startersWrap: { marginTop: 10, gap: 10 },
+  startersLabel: { fontSize: 12, fontWeight: '700', color: colors.inkFaint, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 },
+  starterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: 13,
+    gap: 10,
+  },
+  starterIconWrap: { width: 30, height: 30, borderRadius: 10, backgroundColor: '#F1ECFE', alignItems: 'center', justifyContent: 'center' },
+  starterText: { flex: 1, fontSize: 13, color: colors.ink, fontWeight: '600' },
+  inputRow: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: colors.surface, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border },
+  input: { flex: 1, backgroundColor: colors.bg, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: 14, color: colors.ink },
+  sendBtn: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', ...shadow.floating },
 });

@@ -4,13 +4,30 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   StyleSheet,
   Modal,
   ScrollView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  ScreenHeader,
+  Chip,
+  Card,
+  Avatar,
+  FAB,
+  Reveal,
+  Tappable,
+  GradientButton,
+  GhostButton,
+  EmptyState,
+  colors,
+  gradients,
+  radius,
+  spacing,
+  shadow,
+} from '../theme/UI';
 
 const GENDERS = ['Male', 'Female'];
 
@@ -65,7 +82,7 @@ function Field({ label, value, onChangeText, placeholder, keyboardType, required
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9AA3B5"
+        placeholderTextColor={colors.placeholder}
         keyboardType={keyboardType}
       />
     </View>
@@ -76,13 +93,7 @@ function ChipRow({ options, value, onSelect }) {
   return (
     <View style={styles.chipRow}>
       {options.map((opt) => (
-        <TouchableOpacity
-          key={opt}
-          style={[styles.chip, value === opt && styles.chipActive]}
-          onPress={() => onSelect(opt)}
-        >
-          <Text style={[styles.chipText, value === opt && styles.chipTextActive]}>{opt}</Text>
-        </TouchableOpacity>
+        <Chip key={opt} label={opt} active={value === opt} activeGradient={gradients.rose} onPress={() => onSelect(opt)} />
       ))}
     </View>
   );
@@ -157,11 +168,14 @@ export default function TeachersScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.topBar}>
+      <ScreenHeader eyebrow={`${teachers.length} on staff`} title="Staff" subtitle="Teacher & staff records" gradient={gradients.rose} />
+
+      <View style={styles.searchWrap}>
+        <Ionicons name="search" size={17} color={colors.inkFaint} style={{ marginRight: 8 }} />
         <TextInput
           style={styles.search}
           placeholder="Search by name or subject"
-          placeholderTextColor="#9AA3B5"
+          placeholderTextColor={colors.placeholder}
           value={search}
           onChangeText={setSearch}
         />
@@ -170,62 +184,72 @@ export default function TeachersScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        ListEmptyComponent={<Text style={styles.emptyText}>No staff match your search.</Text>}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card} onPress={() => openView(item)}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item.full_name.charAt(0).toUpperCase()}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{item.full_name}</Text>
-              <Text style={styles.cardSub}>
-                {item.staff_no} · {item.specialty || 'No subject'}
-              </Text>
-            </View>
-          </TouchableOpacity>
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<EmptyState icon="person-outline" title="No staff match your search" />}
+        renderItem={({ item, index }) => (
+          <Reveal index={index} style={{ marginBottom: 10 }}>
+            <Card onPress={() => openView(item)} style={styles.rowCard}>
+              <Avatar name={item.full_name} color={colors.rose} />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.cardTitle}>{item.full_name}</Text>
+                <Text style={styles.cardSub}>
+                  {item.staff_no} · {item.specialty || 'No subject'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
+            </Card>
+          </Reveal>
         )}
       />
 
-      <TouchableOpacity style={styles.fab} onPress={openAdd}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <FAB onPress={openAdd} gradient={gradients.rose} />
 
       {/* View modal */}
       <Modal visible={viewVisible} animationType="slide" onRequestClose={() => setViewVisible(false)}>
         <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <Text style={styles.modalTitle}>{viewing?.full_name}</Text>
-            <Text style={styles.modalSubtitle}>{viewing?.staff_no}</Text>
-
-            <ViewRow label="Gender" value={viewing?.gender} />
-            <ViewRow label="Phone" value={viewing?.phone} />
-            <ViewRow label="Email" value={viewing?.email} />
-            <ViewRow label="Grade / Position" value={viewing?.grade} />
-            <ViewRow label="Specialty / Subject" value={viewing?.specialty} />
-            <ViewRow label="Qualification" value={viewing?.qualification} />
+          <ScreenHeader
+            eyebrow={viewing?.staff_no}
+            title={viewing?.full_name || ''}
+            subtitle={viewing?.specialty}
+            gradient={gradients.rose}
+            right={
+              <Tappable onPress={() => setViewVisible(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color="#fff" />
+              </Tappable>
+            }
+          />
+          <ScrollView contentContainerStyle={styles.modalBody}>
+            <View style={styles.detailCard}>
+              <ViewRow label="Gender" value={viewing?.gender} />
+              <ViewRow label="Phone" value={viewing?.phone} />
+              <ViewRow label="Email" value={viewing?.email} />
+              <ViewRow label="Grade / Position" value={viewing?.grade} />
+              <ViewRow label="Specialty / Subject" value={viewing?.specialty} />
+              <ViewRow label="Qualification" value={viewing?.qualification} last />
+            </View>
 
             <Text style={styles.sectionLabel}>Location</Text>
-            <ViewRow label="Village" value={viewing?.village} />
-            <ViewRow label="Subcounty" value={viewing?.subcounty} />
-            <ViewRow label="District" value={viewing?.district} />
+            <View style={styles.detailCard}>
+              <ViewRow label="Village" value={viewing?.village} />
+              <ViewRow label="Subcounty" value={viewing?.subcounty} />
+              <ViewRow label="District" value={viewing?.district} last />
+            </View>
 
             <Text style={styles.sectionLabel}>Emergency contact</Text>
-            <ViewRow label="Name" value={viewing?.emergency_name} />
-            <ViewRow label="Relationship" value={viewing?.emergency_relation} />
-            <ViewRow label="Phone" value={viewing?.emergency_contact} />
+            <View style={styles.detailCard}>
+              <ViewRow label="Name" value={viewing?.emergency_name} />
+              <ViewRow label="Relationship" value={viewing?.emergency_relation} />
+              <ViewRow label="Phone" value={viewing?.emergency_contact} last />
+            </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.ghostButton} onPress={() => setViewVisible(false)}>
-                <Text style={styles.ghostButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => openEdit(viewing)}>
-                <Text style={styles.primaryButtonText}>Edit</Text>
-              </TouchableOpacity>
+              <GhostButton label="Close" onPress={() => setViewVisible(false)} style={{ flex: 1 }} />
+              <GradientButton label="Edit" icon="pencil" gradient={gradients.rose} onPress={() => openEdit(viewing)} style={{ flex: 1 }} />
             </View>
-            <TouchableOpacity style={styles.dangerLink} onPress={() => deleteTeacher(viewing)}>
+            <Tappable onPress={() => deleteTeacher(viewing)} style={styles.dangerLink}>
               <Text style={styles.dangerLinkText}>Move to trash</Text>
-            </TouchableOpacity>
+            </Tappable>
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -233,9 +257,17 @@ export default function TeachersScreen() {
       {/* Add / Edit modal */}
       <Modal visible={formVisible} animationType="slide" onRequestClose={() => setFormVisible(false)}>
         <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <Text style={styles.modalTitle}>{editing ? 'Edit staff' : 'Add staff'}</Text>
-
+          <ScreenHeader
+            eyebrow={editing ? 'Edit record' : 'New hire'}
+            title={editing ? 'Edit staff' : 'Add staff'}
+            gradient={gradients.rose}
+            right={
+              <Tappable onPress={() => setFormVisible(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color="#fff" />
+              </Tappable>
+            }
+          />
+          <ScrollView contentContainerStyle={styles.modalBody}>
             <Field label="Staff no." value={form.staff_no} onChangeText={() => {}} />
             <Field
               required
@@ -275,12 +307,8 @@ export default function TeachersScreen() {
             <Field label="Phone" value={form.emergency_contact} onChangeText={(v) => setForm({ ...form, emergency_contact: v })} keyboardType="phone-pad" />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.ghostButton} onPress={() => setFormVisible(false)}>
-                <Text style={styles.ghostButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryButton} onPress={saveTeacher}>
-                <Text style={styles.primaryButtonText}>{editing ? 'Save changes' : 'Add staff'}</Text>
-              </TouchableOpacity>
+              <GhostButton label="Cancel" onPress={() => setFormVisible(false)} style={{ flex: 1 }} />
+              <GradientButton label={editing ? 'Save changes' : 'Add staff'} icon="checkmark" gradient={gradients.rose} onPress={saveTeacher} style={{ flex: 1 }} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -289,10 +317,10 @@ export default function TeachersScreen() {
   );
 }
 
-function ViewRow({ label, value }) {
+function ViewRow({ label, value, last }) {
   if (!value) return null;
   return (
-    <View style={styles.viewRow}>
+    <View style={[styles.viewRow, last && { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 }]}>
       <Text style={styles.viewLabel}>{label}</Text>
       <Text style={styles.viewValue}>{value}</Text>
     </View>
@@ -300,103 +328,56 @@ function ViewRow({ label, value }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F9' },
-  topBar: { padding: 16, backgroundColor: '#EEF2F9' },
-  search: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderWidth: 1,
-    borderColor: '#E4E8EF',
-    fontSize: 14,
-  },
-  emptyText: { textAlign: 'center', color: '#9AA3B5', marginTop: 40 },
-  card: {
+  safe: { flex: 1, backgroundColor: colors.bg },
+  searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
+    marginHorizontal: spacing.lg,
+    marginTop: -22,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    ...shadow.card,
+  },
+  search: { flex: 1, fontSize: 14, color: colors.ink },
+  rowCard: { flexDirection: 'row', alignItems: 'center' },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  cardSub: { fontSize: 12.5, color: colors.inkFaint, marginTop: 2, fontWeight: '500' },
+  closeBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  modalBody: { padding: spacing.lg, paddingBottom: 40 },
+  detailCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16, ...shadow.soft },
+  sectionLabel: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: colors.rose,
+    marginTop: 22,
     marginBottom: 10,
-    gap: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#EFEDFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontWeight: '800', color: '#5B4FC4', fontSize: 16 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#1D2433' },
-  cardSub: { fontSize: 12.5, color: '#5B647A', marginTop: 2 },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#16274A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 30 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#16274A' },
-  modalSubtitle: { fontSize: 13, color: '#5B647A', marginTop: 4, marginBottom: 16 },
-  sectionLabel: { fontSize: 13, fontWeight: '800', color: '#16274A', marginTop: 20, marginBottom: 8 },
   field: { marginBottom: 14 },
-  label: { fontSize: 12.5, fontWeight: '600', color: '#5B647A', marginBottom: 6, marginTop: 4 },
-  required: { color: '#D6564F' },
+  label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 8, marginTop: 4 },
+  required: { color: colors.danger },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-    borderRadius: 10,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14.5,
-    backgroundColor: '#FAFBFD',
-    color: '#1D2433',
+    backgroundColor: colors.surfaceAlt,
+    color: colors.ink,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E4E8EF',
-    backgroundColor: '#FAFBFD',
-  },
-  chipActive: { backgroundColor: '#16274A', borderColor: '#16274A' },
-  chipText: { fontSize: 12.5, fontWeight: '600', color: '#5B647A' },
-  chipTextActive: { color: '#fff' },
-  viewRow: { marginBottom: 12 },
-  viewLabel: { fontSize: 11.5, color: '#9AA3B5', fontWeight: '600', textTransform: 'uppercase' },
-  viewValue: { fontSize: 15, color: '#1D2433', marginTop: 3 },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 28 },
-  ghostButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-  },
-  ghostButtonText: { fontWeight: '700', color: '#5B647A' },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#16274A',
-  },
-  primaryButtonText: { fontWeight: '700', color: '#fff' },
-  dangerLink: { alignItems: 'center', marginTop: 18, marginBottom: 30 },
-  dangerLinkText: { color: '#D6564F', fontWeight: '700', fontSize: 13 },
+  viewRow: { marginBottom: 14, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
+  viewLabel: { fontSize: 11, color: colors.inkFaint, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  viewValue: { fontSize: 15, color: colors.ink, marginTop: 4, fontWeight: '600' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 26 },
+  dangerLink: { alignItems: 'center', marginTop: 18, marginBottom: 10, paddingVertical: 10 },
+  dangerLinkText: { color: colors.danger, fontWeight: '800', fontSize: 13 },
 });

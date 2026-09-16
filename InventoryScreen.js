@@ -4,13 +4,28 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   StyleSheet,
   Modal,
   ScrollView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  ScreenHeader,
+  Chip,
+  Card,
+  Tappable,
+  Reveal,
+  FAB,
+  GradientButton,
+  GhostButton,
+  EmptyState,
+  colors,
+  gradients,
+  radius,
+  spacing,
+} from '../theme/UI';
 
 const MODULES = {
   property: { label: 'Property Register', categoryLabel: 'Category (Furniture, Building, Vehicle, Land)', locationLabel: 'Location' },
@@ -93,54 +108,59 @@ export default function InventoryScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow}>
+      <ScreenHeader eyebrow="Assets & stock" title="Inventory" subtitle={def.label} gradient={gradients.amber} />
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillRow} contentContainerStyle={{ paddingRight: 16 }}>
         {Object.entries(MODULES).map(([id, m]) => (
-          <TouchableOpacity
-            key={id}
-            style={[styles.pill, tab === id && styles.pillActive]}
-            onPress={() => setTab(id)}
-          >
-            <Text style={[styles.pillText, tab === id && styles.pillTextActive]}>{m.label}</Text>
-          </TouchableOpacity>
+          <Chip key={id} label={m.label} active={tab === id} activeGradient={gradients.amber} onPress={() => setTab(id)} />
         ))}
       </ScrollView>
 
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        ListEmptyComponent={<Text style={styles.emptyText}>No items yet.</Text>}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.itemCard} onPress={() => openEdit(item)}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.itemTitle}>{item.name}</Text>
-              <Text style={styles.itemSub}>
-                {item.category} · {item.location} · Qty {item.quantity}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => remove(item)}>
-              <Text style={styles.dangerLinkText}>Delete</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<EmptyState icon="cube-outline" title="No items yet" />}
+        renderItem={({ item, index }) => (
+          <Reveal index={index} style={{ marginBottom: 10 }}>
+            <Card onPress={() => openEdit(item)} style={styles.itemCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemTitle}>{item.name}</Text>
+                <Text style={styles.itemSub}>
+                  {item.category} · {item.location} · Qty {item.quantity}
+                </Text>
+              </View>
+              <Tappable onPress={() => remove(item)} style={styles.dangerLinkWrap}>
+                <Text style={styles.dangerLinkText}>Delete</Text>
+              </Tappable>
+            </Card>
+          </Reveal>
         )}
       />
 
-      <TouchableOpacity style={styles.fab} onPress={openAdd}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <FAB onPress={openAdd} gradient={gradients.amber} />
 
       <Modal visible={formVisible} animationType="slide" onRequestClose={() => setFormVisible(false)}>
         <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <Text style={styles.modalTitle}>{editingId ? 'Edit item' : `Add ${def.label.toLowerCase()} item`}</Text>
-
+          <ScreenHeader
+            eyebrow={def.label}
+            title={editingId ? 'Edit item' : 'Add item'}
+            gradient={gradients.amber}
+            right={
+              <Tappable onPress={() => setFormVisible(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color="#fff" />
+              </Tappable>
+            }
+          />
+          <ScrollView contentContainerStyle={styles.modalBody}>
             <View style={styles.field}>
               <Text style={styles.label}>Item name</Text>
               <TextInput
                 style={styles.input}
                 value={form.name}
                 onChangeText={(v) => setForm({ ...form, name: v })}
-                placeholderTextColor="#9AA3B5"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
             <View style={styles.field}>
@@ -149,7 +169,7 @@ export default function InventoryScreen() {
                 style={styles.input}
                 value={form.category}
                 onChangeText={(v) => setForm({ ...form, category: v })}
-                placeholderTextColor="#9AA3B5"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
             <View style={styles.field}>
@@ -158,7 +178,7 @@ export default function InventoryScreen() {
                 style={styles.input}
                 value={form.location}
                 onChangeText={(v) => setForm({ ...form, location: v })}
-                placeholderTextColor="#9AA3B5"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
             <View style={styles.field}>
@@ -168,17 +188,13 @@ export default function InventoryScreen() {
                 value={String(form.quantity)}
                 onChangeText={(v) => setForm({ ...form, quantity: v })}
                 keyboardType="numeric"
-                placeholderTextColor="#9AA3B5"
+                placeholderTextColor={colors.placeholder}
               />
             </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.ghostButton} onPress={() => setFormVisible(false)}>
-                <Text style={styles.ghostButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryButton} onPress={save}>
-                <Text style={styles.primaryButtonText}>{editingId ? 'Save changes' : 'Add item'}</Text>
-              </TouchableOpacity>
+              <GhostButton label="Cancel" onPress={() => setFormVisible(false)} style={{ flex: 1 }} />
+              <GradientButton label={editingId ? 'Save changes' : 'Add item'} icon="checkmark" gradient={gradients.amber} onPress={save} style={{ flex: 1 }} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -188,78 +204,30 @@ export default function InventoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F9' },
-  pillRow: { paddingHorizontal: 16, paddingTop: 16, maxHeight: 52 },
-  pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#E4E8EF',
+  safe: { flex: 1, backgroundColor: colors.bg },
+  pillRow: { paddingHorizontal: spacing.lg, marginTop: -16, maxHeight: 52 },
+  itemCard: { flexDirection: 'row', alignItems: 'center' },
+  itemTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  itemSub: { fontSize: 12.5, color: colors.inkFaint, marginTop: 3, fontWeight: '500' },
+  dangerLinkWrap: { paddingHorizontal: 6, paddingVertical: 6 },
+  dangerLinkText: { color: colors.danger, fontWeight: '700', fontSize: 12.5 },
+  closeBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  pillActive: { backgroundColor: '#16274A', borderColor: '#16274A' },
-  pillText: { fontSize: 13, fontWeight: '700', color: '#5B647A' },
-  pillTextActive: { color: '#fff' },
-  emptyText: { textAlign: 'center', color: '#9AA3B5', marginTop: 40 },
-  itemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    marginTop: 6,
-  },
-  itemTitle: { fontSize: 15, fontWeight: '700', color: '#1D2433' },
-  itemSub: { fontSize: 12.5, color: '#5B647A', marginTop: 3 },
-  dangerLinkText: { color: '#D6564F', fontWeight: '700', fontSize: 12.5 },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#16274A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 30 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#16274A', marginBottom: 16 },
+  modalBody: { padding: spacing.lg, paddingBottom: 40 },
   field: { marginBottom: 14 },
-  label: { fontSize: 12.5, fontWeight: '600', color: '#5B647A', marginBottom: 6 },
+  label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 8, marginTop: 4 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-    borderRadius: 10,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14.5,
-    backgroundColor: '#FAFBFD',
-    color: '#1D2433',
+    backgroundColor: colors.surfaceAlt,
+    color: colors.ink,
   },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20, marginBottom: 30 },
-  ghostButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-  },
-  ghostButtonText: { fontWeight: '700', color: '#5B647A' },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#16274A',
-  },
-  primaryButtonText: { fontWeight: '700', color: '#fff' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20 },
 });

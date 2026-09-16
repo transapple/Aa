@@ -4,19 +4,33 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   StyleSheet,
   Modal,
   ScrollView,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  ScreenHeader,
+  Card,
+  Tappable,
+  Reveal,
+  FAB,
+  GradientButton,
+  GhostButton,
+  EmptyState,
+  colors,
+  gradients,
+  radius,
+  spacing,
+} from '../theme/UI';
 
 const SECTIONS = [
-  { id: 'terms', label: 'Terms', emoji: '📅' },
-  { id: 'classes', label: 'Classes', emoji: '🎓' },
-  { id: 'subjects', label: 'Subjects', emoji: '📖' },
-  { id: 'grades', label: 'Grades', emoji: '✅' },
+  { id: 'terms', label: 'Terms', icon: 'calendar' },
+  { id: 'classes', label: 'Classes', icon: 'school' },
+  { id: 'subjects', label: 'Subjects', icon: 'book' },
+  { id: 'grades', label: 'Grades', icon: 'checkmark-done' },
 ];
 
 const SEED = {
@@ -101,22 +115,21 @@ export default function AcademicSetupScreen() {
   if (!activeSection) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={{ padding: 16 }}>
-          <Text style={styles.introTitle}>Academic Settings</Text>
-          <Text style={styles.introSub}>
-            Terms, classes, subjects and grading for the school.
-          </Text>
-        </View>
+        <ScreenHeader eyebrow="Setup" title="Academic Settings" subtitle="Terms, classes, subjects and grading" gradient={gradients.teal} />
         <FlatList
           data={SECTIONS}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.menuRow} onPress={() => setActiveSection(item.id)}>
-              <Text style={styles.menuEmoji}>{item.emoji}</Text>
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
+          contentContainerStyle={{ padding: spacing.lg, marginTop: -18 }}
+          renderItem={({ item, index }) => (
+            <Reveal index={index} style={{ marginBottom: 10 }}>
+              <Card onPress={() => setActiveSection(item.id)} style={styles.menuRow}>
+                <View style={[styles.menuIconWrap, { backgroundColor: `${colors.teal}18` }]}>
+                  <Ionicons name={item.icon} size={19} color={colors.teal} />
+                </View>
+                <Text style={styles.menuLabel}>{item.label}</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
+              </Card>
+            </Reveal>
           )}
         />
       </SafeAreaView>
@@ -128,60 +141,69 @@ export default function AcademicSetupScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.subHeader}>
-        <TouchableOpacity onPress={() => setActiveSection(null)}>
-          <Text style={styles.backLink}>‹ Academic Settings</Text>
-        </TouchableOpacity>
-        <Text style={styles.subHeaderTitle}>{sectionLabel}</Text>
-      </View>
+      <ScreenHeader
+        eyebrow="Academic Settings"
+        title={sectionLabel}
+        gradient={gradients.teal}
+        right={
+          <Tappable onPress={() => setActiveSection(null)} style={styles.closeBtn}>
+            <Ionicons name="close" size={20} color="#fff" />
+          </Tappable>
+        }
+      />
 
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        ListEmptyComponent={<Text style={styles.emptyText}>Nothing here yet.</Text>}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.itemCard} onPress={() => openEdit(item)}>
-            <View style={{ flex: 1 }}>
-              {activeSection === 'terms' && (
-                <>
-                  <Text style={styles.itemTitle}>{item.name}</Text>
-                  <Text style={styles.itemSub}>{item.start_date} → {item.end_date}</Text>
-                </>
-              )}
-              {activeSection === 'classes' && (
-                <>
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 110, marginTop: -8 }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<EmptyState icon="file-tray-outline" title="Nothing here yet" />}
+        renderItem={({ item, index }) => (
+          <Reveal index={index} style={{ marginBottom: 10 }}>
+            <Card onPress={() => openEdit(item)} style={styles.itemCard}>
+              <View style={{ flex: 1 }}>
+                {activeSection === 'terms' && (
+                  <>
+                    <Text style={styles.itemTitle}>{item.name}</Text>
+                    <Text style={styles.itemSub}>{item.start_date} → {item.end_date}</Text>
+                  </>
+                )}
+                {activeSection === 'classes' && (
                   <Text style={styles.itemTitle}>{item.name} {item.section}</Text>
-                </>
-              )}
-              {activeSection === 'subjects' && <Text style={styles.itemTitle}>{item.name}</Text>}
-              {activeSection === 'grades' && (
-                <>
-                  <Text style={styles.itemTitle}>{item.grade}</Text>
-                  <Text style={styles.itemSub}>
-                    {item.min_score}–{item.max_score}% · {item.remark}
-                  </Text>
-                </>
-              )}
-            </View>
-            <TouchableOpacity onPress={() => remove(item)}>
-              <Text style={styles.dangerLinkText}>Delete</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
+                )}
+                {activeSection === 'subjects' && <Text style={styles.itemTitle}>{item.name}</Text>}
+                {activeSection === 'grades' && (
+                  <>
+                    <Text style={styles.itemTitle}>{item.grade}</Text>
+                    <Text style={styles.itemSub}>
+                      {item.min_score}–{item.max_score}% · {item.remark}
+                    </Text>
+                  </>
+                )}
+              </View>
+              <Tappable onPress={() => remove(item)} style={styles.dangerLinkWrap}>
+                <Text style={styles.dangerLinkText}>Delete</Text>
+              </Tappable>
+            </Card>
+          </Reveal>
         )}
       />
 
-      <TouchableOpacity style={styles.fab} onPress={openAdd}>
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      <FAB onPress={openAdd} gradient={gradients.teal} />
 
       <Modal visible={formVisible} animationType="slide" onRequestClose={() => setFormVisible(false)}>
         <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
-            <Text style={styles.modalTitle}>
-              {editingId ? 'Edit' : 'Add'} {sectionLabel.slice(0, -1) || sectionLabel}
-            </Text>
-
+          <ScreenHeader
+            eyebrow={sectionLabel}
+            title={`${editingId ? 'Edit' : 'Add'} ${sectionLabel.slice(0, -1) || sectionLabel}`}
+            gradient={gradients.teal}
+            right={
+              <Tappable onPress={() => setFormVisible(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color="#fff" />
+              </Tappable>
+            }
+          />
+          <ScrollView contentContainerStyle={styles.modalBody}>
             {activeSection === 'terms' && (
               <>
                 <LabeledInput label="Term name" value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} />
@@ -208,12 +230,8 @@ export default function AcademicSetupScreen() {
             )}
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.ghostButton} onPress={() => setFormVisible(false)}>
-                <Text style={styles.ghostButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryButton} onPress={save}>
-                <Text style={styles.primaryButtonText}>{editingId ? 'Save changes' : 'Add'}</Text>
-              </TouchableOpacity>
+              <GhostButton label="Cancel" onPress={() => setFormVisible(false)} style={{ flex: 1 }} />
+              <GradientButton label={editingId ? 'Save changes' : 'Add'} icon="checkmark" gradient={gradients.teal} onPress={save} style={{ flex: 1 }} />
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -231,7 +249,7 @@ function LabeledInput({ label, value, onChangeText, placeholder, keyboardType })
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9AA3B5"
+        placeholderTextColor={colors.placeholder}
         keyboardType={keyboardType}
       />
     </View>
@@ -239,81 +257,32 @@ function LabeledInput({ label, value, onChangeText, placeholder, keyboardType })
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F9' },
-  introTitle: { fontSize: 20, fontWeight: '800', color: '#227A61' },
-  introSub: { fontSize: 13, color: '#5B647A', marginTop: 6 },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 10,
-    gap: 12,
+  safe: { flex: 1, backgroundColor: colors.bg },
+  menuRow: { flexDirection: 'row', alignItems: 'center' },
+  menuIconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  menuLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.ink },
+  closeBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  menuEmoji: { fontSize: 20 },
-  menuLabel: { flex: 1, fontSize: 15, fontWeight: '700', color: '#1D2433' },
-  chevron: { fontSize: 20, color: '#9AA3B5' },
-  subHeader: { padding: 16, backgroundColor: '#fff' },
-  backLink: { color: '#3E8EDE', fontWeight: '600', fontSize: 13, marginBottom: 8 },
-  subHeaderTitle: { fontSize: 20, fontWeight: '800', color: '#16274A' },
-  emptyText: { textAlign: 'center', color: '#9AA3B5', marginTop: 40 },
-  itemCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  itemTitle: { fontSize: 15, fontWeight: '700', color: '#1D2433' },
-  itemSub: { fontSize: 12.5, color: '#5B647A', marginTop: 3 },
-  dangerLinkText: { color: '#D6564F', fontWeight: '700', fontSize: 12.5 },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#16274A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 30 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#16274A', marginBottom: 16 },
+  itemCard: { flexDirection: 'row', alignItems: 'center' },
+  itemTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  itemSub: { fontSize: 12.5, color: colors.inkFaint, marginTop: 3, fontWeight: '500' },
+  dangerLinkWrap: { paddingHorizontal: 6, paddingVertical: 6 },
+  dangerLinkText: { color: colors.danger, fontWeight: '700', fontSize: 12.5 },
+  modalBody: { padding: spacing.lg, paddingBottom: 40 },
   field: { marginBottom: 14 },
-  label: { fontSize: 12.5, fontWeight: '600', color: '#5B647A', marginBottom: 6 },
+  label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 8, marginTop: 4 },
   input: {
     borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-    borderRadius: 10,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14.5,
-    backgroundColor: '#FAFBFD',
-    color: '#1D2433',
+    backgroundColor: colors.surfaceAlt,
+    color: colors.ink,
   },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20, marginBottom: 30 },
-  ghostButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E4E8EF',
-  },
-  ghostButtonText: { fontWeight: '700', color: '#5B647A' },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: '#16274A',
-  },
-  primaryButtonText: { fontWeight: '700', color: '#fff' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20 },
 });

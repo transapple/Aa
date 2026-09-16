@@ -4,11 +4,23 @@ import {
   ScrollView,
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  ScreenHeader,
+  Card,
+  Badge,
+  Avatar,
+  Tappable,
+  Reveal,
+  GhostButton,
+  colors,
+  gradients,
+  radius,
+  spacing,
+} from '../theme/UI';
 
 const ME = {
   full_name: 'Jane Admin',
@@ -32,20 +44,18 @@ const SEED_PENDING_REQUESTS = [
   { id: 'r1', full_name: 'Peter Okwir', message: 'Please update my phone number to 0705 111 222', created_at: new Date().toISOString() },
 ];
 
-function MenuRow({ icon, color, label, badge, onPress }) {
+function MenuRow({ icon, color, label, badge, onPress, index = 0 }) {
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress}>
-      <View style={[styles.iconWrap, { backgroundColor: `${color}1A` }]}>
-        <Ionicons name={icon} size={18} color={color} />
-      </View>
-      <Text style={styles.rowLabel}>{label}</Text>
-      {badge > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{badge}</Text>
+    <Reveal index={index}>
+      <Card onPress={onPress} style={styles.row}>
+        <View style={[styles.iconWrap, { backgroundColor: `${color}1A` }]}>
+          <Ionicons name={icon} size={18} color={color} />
         </View>
-      )}
-      <Ionicons name="chevron-forward" size={18} color="#9AA3B5" />
-    </TouchableOpacity>
+        <Text style={styles.rowLabel}>{label}</Text>
+        {badge > 0 && <Badge label={String(badge)} tone="warning" style={{ marginRight: 8 }} />}
+        <Ionicons name="chevron-forward" size={18} color={colors.inkFaint} />
+      </Card>
+    </Reveal>
   );
 }
 
@@ -76,46 +86,31 @@ export default function AccountScreen() {
     ]);
   }
 
-  const MeCard = (
-    <View style={styles.card}>
-      <View style={styles.meRow}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{ME.full_name.charAt(0)}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.meName}>
-            {ME.full_name} {ME.is_owner ? <Text style={styles.ownerBadge}>Owner</Text> : null}
-          </Text>
-          <Text style={styles.meSub}>{ME.phone} · @{ME.username}</Text>
-          <Text style={styles.meSub}>{ME.department} · {ME.position}</Text>
-        </View>
-      </View>
-      <TouchableOpacity style={styles.ghostButton} onPress={logout}>
-        <Ionicons name="log-out-outline" size={16} color="#16274A" />
-        <Text style={styles.ghostButtonText}>Log out</Text>
-      </TouchableOpacity>
-    </View>
+  const backRow = (
+    <Tappable onPress={() => setSection(null)} style={styles.backRow}>
+      <Ionicons name="chevron-back" size={18} color={colors.primary} />
+      <Text style={styles.backText}>Account</Text>
+    </Tappable>
   );
 
   if (section === 'manage') {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <TouchableOpacity onPress={() => setSection(null)} style={styles.backRow}>
-            <Ionicons name="chevron-back" size={18} color="#16274A" />
-            <Text style={styles.backText}>Account</Text>
-          </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {backRow}
           <Text style={styles.sectionTitle}>Manage accounts</Text>
-          {staff.map((s) => (
-            <View key={s.id} style={styles.row}>
-              <View style={[styles.iconWrap, { backgroundColor: '#EEF2F9' }]}>
-                <Ionicons name="person" size={18} color="#16274A" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.rowTitle}>{s.full_name}</Text>
-                <Text style={styles.rowSub}>{s.department} · {s.role}</Text>
-              </View>
-            </View>
+          {staff.map((s, i) => (
+            <Reveal key={s.id} index={i} style={{ marginBottom: 10 }}>
+              <Card style={styles.row}>
+                <View style={[styles.iconWrap, { backgroundColor: `${colors.primary}18` }]}>
+                  <Ionicons name="person" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowTitle}>{s.full_name}</Text>
+                  <Text style={styles.rowSub}>{s.department} · {s.role}</Text>
+                </View>
+              </Card>
+            </Reveal>
           ))}
         </ScrollView>
       </SafeAreaView>
@@ -125,28 +120,27 @@ export default function AccountScreen() {
   if (section === 'pendingregs') {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <TouchableOpacity onPress={() => setSection(null)} style={styles.backRow}>
-            <Ionicons name="chevron-back" size={18} color="#16274A" />
-            <Text style={styles.backText}>Account</Text>
-          </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {backRow}
           <Text style={styles.sectionTitle}>Pending registrations</Text>
           {pendingRegs.length === 0 ? (
             <Text style={styles.helper}>No pending registrations.</Text>
           ) : (
-            pendingRegs.map((p) => (
-              <View key={p.id} style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>{p.full_name}</Text>
-                  <Text style={styles.rowSub}>{p.department}</Text>
-                </View>
-                <TouchableOpacity style={styles.smallApprove} onPress={() => approveReg(p)}>
-                  <Text style={styles.smallApproveText}>Approve</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.smallReject} onPress={() => rejectReg(p)}>
-                  <Text style={styles.smallRejectText}>Reject</Text>
-                </TouchableOpacity>
-              </View>
+            pendingRegs.map((p, i) => (
+              <Reveal key={p.id} index={i} style={{ marginBottom: 10 }}>
+                <Card style={styles.row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>{p.full_name}</Text>
+                    <Text style={styles.rowSub}>{p.department}</Text>
+                  </View>
+                  <Tappable style={styles.smallApprove} onPress={() => approveReg(p)}>
+                    <Text style={styles.smallApproveText}>Approve</Text>
+                  </Tappable>
+                  <Tappable style={styles.smallReject} onPress={() => rejectReg(p)}>
+                    <Text style={styles.smallRejectText}>Reject</Text>
+                  </Tappable>
+                </Card>
+              </Reveal>
             ))
           )}
         </ScrollView>
@@ -157,25 +151,24 @@ export default function AccountScreen() {
   if (section === 'pendingreqs') {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <TouchableOpacity onPress={() => setSection(null)} style={styles.backRow}>
-            <Ionicons name="chevron-back" size={18} color="#16274A" />
-            <Text style={styles.backText}>Account</Text>
-          </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {backRow}
           <Text style={styles.sectionTitle}>Pending detail-change requests</Text>
           {pendingReqs.length === 0 ? (
             <Text style={styles.helper}>No pending requests.</Text>
           ) : (
-            pendingReqs.map((r) => (
-              <View key={r.id} style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowTitle}>{r.full_name}</Text>
-                  <Text style={styles.rowSub}>{r.message}</Text>
-                </View>
-                <TouchableOpacity style={styles.smallApprove} onPress={() => dismissRequest(r)}>
-                  <Text style={styles.smallApproveText}>Dismiss</Text>
-                </TouchableOpacity>
-              </View>
+            pendingReqs.map((r, i) => (
+              <Reveal key={r.id} index={i} style={{ marginBottom: 10 }}>
+                <Card style={styles.row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>{r.full_name}</Text>
+                    <Text style={styles.rowSub}>{r.message}</Text>
+                  </View>
+                  <Tappable style={styles.smallApprove} onPress={() => dismissRequest(r)}>
+                    <Text style={styles.smallApproveText}>Dismiss</Text>
+                  </Tappable>
+                </Card>
+              </Reveal>
             ))
           )}
         </ScrollView>
@@ -185,13 +178,28 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {MeCard}
-        <View style={styles.card}>
-          <MenuRow icon="notifications" color="#C08A2E" label="Pending Registrations" badge={pendingRegs.length} onPress={() => setSection('pendingregs')} />
-          <MenuRow icon="people" color="#16274A" label="Manage Accounts" onPress={() => setSection('manage')} />
-          <MenuRow icon="cube" color="#2E9E7C" label="Departments" onPress={() => setSection('departments')} />
-          <MenuRow icon="create" color="#5B5FC7" label="Pending Requests" badge={pendingReqs.length} onPress={() => setSection('pendingreqs')} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScreenHeader eyebrow="You" title="Account" subtitle="Profile, staff & permissions" gradient={gradients.primary} />
+
+        <View style={styles.body}>
+          <Card style={styles.meCard}>
+            <View style={styles.meRow}>
+              <Avatar name={ME.full_name} size={52} color={colors.primary} />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.meName}>
+                  {ME.full_name} {ME.is_owner ? <Text style={styles.ownerBadge}>Owner</Text> : null}
+                </Text>
+                <Text style={styles.meSub}>{ME.phone} · @{ME.username}</Text>
+                <Text style={styles.meSub}>{ME.department} · {ME.position}</Text>
+              </View>
+            </View>
+            <GhostButton label="Log out" onPress={logout} style={{ marginTop: 4 }} />
+          </Card>
+
+          <MenuRow index={0} icon="notifications" color={colors.amber} label="Pending Registrations" badge={pendingRegs.length} onPress={() => setSection('pendingregs')} />
+          <MenuRow index={1} icon="people" color={colors.primary} label="Manage Accounts" onPress={() => setSection('manage')} />
+          <MenuRow index={2} icon="cube" color={colors.emerald} label="Departments" onPress={() => setSection('departments')} />
+          <MenuRow index={3} icon="create" color={colors.plum} label="Pending Requests" badge={pendingReqs.length} onPress={() => setSection('pendingreqs')} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -199,30 +207,25 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#EEF2F9' },
-  content: { padding: 16, paddingBottom: 32 },
-  card: { backgroundColor: '#fff', borderRadius: 14, padding: 8, marginBottom: 16 },
-  meRow: { flexDirection: 'row', alignItems: 'center', padding: 8, marginBottom: 8 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#16274A', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  avatarText: { color: '#fff', fontSize: 18, fontWeight: '800' },
-  meName: { fontSize: 15, fontWeight: '800', color: '#16274A' },
-  ownerBadge: { fontSize: 10, fontWeight: '700', color: '#2E9E7C', backgroundColor: '#E4F5EE', paddingHorizontal: 6, borderRadius: 8, overflow: 'hidden' },
-  meSub: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  ghostButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10, marginHorizontal: 8, marginBottom: 4, borderRadius: 10, backgroundColor: '#EEF2F9' },
-  ghostButtonText: { color: '#16274A', fontWeight: '700', fontSize: 13, marginLeft: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12 },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  content: { paddingBottom: 40 },
+  body: { paddingHorizontal: spacing.lg, marginTop: -18, gap: 10 },
+  meCard: { marginBottom: 4 },
+  meRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  meName: { fontSize: 15, fontWeight: '800', color: colors.ink },
+  ownerBadge: { fontSize: 10, fontWeight: '700', color: '#0F7A50', backgroundColor: colors.successBg, paddingHorizontal: 6, borderRadius: 8, overflow: 'hidden' },
+  meSub: { fontSize: 12, color: colors.inkFaint, marginTop: 2, fontWeight: '500' },
+  row: { flexDirection: 'row', alignItems: 'center' },
   iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  rowLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: '#16274A' },
-  rowTitle: { fontSize: 14, fontWeight: '700', color: '#16274A' },
-  rowSub: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  badge: { backgroundColor: '#FDF1DE', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#C08A2E' },
-  backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  backText: { color: '#16274A', fontWeight: '700', marginLeft: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#16274A', marginBottom: 12 },
-  helper: { fontSize: 13, color: '#6B7280' },
-  smallApprove: { backgroundColor: '#E4F5EE', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, marginLeft: 6 },
-  smallApproveText: { fontSize: 11, fontWeight: '700', color: '#2E9E7C' },
-  smallReject: { backgroundColor: '#FDECEC', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, marginLeft: 6 },
-  smallRejectText: { fontSize: 11, fontWeight: '700', color: '#D6564F' },
+  rowLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.ink },
+  rowTitle: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  rowSub: { fontSize: 12, color: colors.inkFaint, marginTop: 2, fontWeight: '500' },
+  backRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: spacing.lg, marginTop: 16, marginBottom: 12 },
+  backText: { color: colors.primary, fontWeight: '700', marginLeft: 4 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.ink, marginHorizontal: spacing.lg, marginBottom: 12 },
+  helper: { fontSize: 13, color: colors.inkFaint, marginHorizontal: spacing.lg },
+  smallApprove: { backgroundColor: colors.successBg, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.sm, marginLeft: 6 },
+  smallApproveText: { fontSize: 11, fontWeight: '700', color: '#0F7A50' },
+  smallReject: { backgroundColor: colors.dangerBg, paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.sm, marginLeft: 6 },
+  smallRejectText: { fontSize: 11, fontWeight: '700', color: colors.danger },
 });
