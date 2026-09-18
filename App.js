@@ -107,9 +107,9 @@ export default function App() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: '#4F46E5',
-          tabBarInactiveTintColor: '#9AA3B5',
-          tabBarStyle: { borderTopColor: '#EAEDF6', height: 60, paddingBottom: 8, paddingTop: 6 },
+          tabBarActiveTintColor: '#1472D9',
+          tabBarInactiveTintColor: '#7890AA',
+          tabBarStyle: { backgroundColor: '#FFFFFF', borderTopColor: '#E4EDF5', borderTopWidth: 1, height: 70, paddingBottom: 8, paddingTop: 7, elevation: 0 },
           tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={TAB_ICONS[route.name]} size={focused ? size + 1 : size} color={color} />
