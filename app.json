@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.transappletechnologies.schoolmanager",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -24,6 +25,13 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7a660628-1ddb-41b5-bdd4-d921a610d9d9"
+      }
+    },
+    "sdkVersion": "51.0.0",
+    "platforms": ["ios", "android"]
   }
 }
