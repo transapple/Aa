@@ -2,6 +2,7 @@
   "expo": {
     "name": "School Management",
     "slug": "school-management-app",
+    "owner": "transappletech",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
